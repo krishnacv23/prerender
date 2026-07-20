@@ -1,0 +1,83 @@
+application:
+  actions: "actions"
+  runtimeManifest:
+    packages:
+      aem-commerce-ssg:
+        license: "Apache-2.0"
+        inputs:
+          ORG: "${ORG}"
+          SITE: "${SITE}"
+          PRODUCT_PAGE_URL_FORMAT: "${PRODUCT_PAGE_URL_FORMAT}"
+          LOG_LEVEL: "error"
+          LOG_INGESTOR_ENDPOINT: "https://log-ingestor.aem-storefront.com/api/v1/services/change-detector"
+          CONTENT_URL: "${CONTENT_URL}"
+          PRODUCTS_TEMPLATE: "${PRODUCTS_TEMPLATE}"
+          STORE_URL: "${STORE_URL}"
+          CONFIG_NAME: "config"
+          LOCALES: "${LOCALES}"
+          SITE_TOKEN: "${SITE_TOKEN}"
+        actions:
+          pdp-renderer:
+            function: "actions/pdp-renderer/index.js"
+            web: "yes"
+            runtime: "nodejs:22"
+            annotations:
+              final: true
+            include:
+              - - "actions/pdp-renderer/templates/*.hbs"
+                - "templates/"
+          check-product-changes:
+            function: "actions/check-product-changes/index.js"
+            web: "no"
+            runtime: "nodejs:22"
+            include:
+              - - "actions/pdp-renderer/templates/*.hbs"
+                - "templates/"
+            limits:
+              memorySize: 256
+              timeout: 3600000
+            inputs:
+              AEM_ADMIN_API_AUTH_TOKEN: "${AEM_ADMIN_API_AUTH_TOKEN}"
+            annotations:
+              final: true
+          fetch-all-products:
+            function: "actions/fetch-all-products/index.js"
+            web: "yes"
+            runtime: "nodejs:22"
+            annotations:
+              final: true
+          get-overlay-url:
+            function: "actions/get-overlay-url/index.js"
+            runtime: "nodejs:22"
+            annotations:
+              final: true
+          mark-up-clean-up:
+            function: "actions/mark-up-clean-up/index.js"
+            runtime: "nodejs:22"
+            inputs:
+              AEM_ADMIN_API_AUTH_TOKEN: "${AEM_ADMIN_API_AUTH_TOKEN}"
+            annotations:
+              final: true
+#        triggers:
+#          productPollerTrigger:
+#            feed: "/whisk.system/alarms/interval"
+#            inputs:
+#              minutes: 5
+#          productScraperTrigger:
+#            feed: "/whisk.system/alarms/interval"
+#            inputs:
+#              minutes: 60
+#         markUpCleanUpTrigger:
+#            feed: "/whisk.system/alarms/interval"
+#            inputs:
+#              minutes: 60
+#        rules:
+#          productPollerRule:
+#            trigger: "productPollerTrigger"
+#            action: "check-product-changes"
+#          productScraperRule:
+#            trigger: "productScraperTrigger"
+#            action: "fetch-all-products"
+#          markUpCleanUpRule:
+#            trigger: "markUpCleanUpTrigger"
+#            action: "mark-up-clean-up"
