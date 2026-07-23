@@ -43,7 +43,10 @@
     "lint:fix": "npm run lint -- --fix",
     "deploy": "rm -r dist; aio app deploy",
     "setup": "npm i && npx setup",
-    "undeploy": "aio app undeploy"
+    "undeploy": "aio app undeploy",
+    "categories:fetch": "node runners/run-fetch-all-categories.js",
+    "categories:poll": "node runners/run-check-category-changes.js",
+    "categories:cleanup": "node runners/run-mark-up-category-clean-up.js"
   },
   "engines": {
     "node": ">=18"

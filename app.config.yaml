@@ -8,10 +8,14 @@ application:
           ORG: "${ORG}"
           SITE: "${SITE}"
           PRODUCT_PAGE_URL_FORMAT: "${PRODUCT_PAGE_URL_FORMAT}"
+          CATEGORY_PAGE_URL_FORMAT: "${CATEGORY_PAGE_URL_FORMAT}"
+          ROOT_CATEGORY_ID: "${ROOT_CATEGORY_ID}"
+          CATEGORY_DEPTH: "${CATEGORY_DEPTH}"
           LOG_LEVEL: "error"
           LOG_INGESTOR_ENDPOINT: "https://log-ingestor.aem-storefront.com/api/v1/services/change-detector"
           CONTENT_URL: "${CONTENT_URL}"
           PRODUCTS_TEMPLATE: "${PRODUCTS_TEMPLATE}"
+          CATEGORIES_TEMPLATE: "${CATEGORIES_TEMPLATE}"
           STORE_URL: "${STORE_URL}"
           CONFIG_NAME: "config"
           LOCALES: "${LOCALES}"
@@ -26,6 +30,12 @@ application:
             include:
               - - "actions/pdp-renderer/templates/*.hbs"
                 - "templates/"
+          plp-renderer:
+            function: "actions/plp-renderer/index.js"
+            web: "yes"
+            runtime: "nodejs:22"
+            annotations:
+              final: true
           check-product-changes:
             function: "actions/check-product-changes/index.js"
             web: "no"
@@ -40,8 +50,25 @@ application:
               AEM_ADMIN_API_AUTH_TOKEN: "${AEM_ADMIN_API_AUTH_TOKEN}"
             annotations:
               final: true
+          check-category-changes:
+            function: "actions/check-category-changes/index.js"
+            web: "no"
+            runtime: "nodejs:22"
+            limits:
+              memorySize: 256
+              timeout: 3600000
+            inputs:
+              AEM_ADMIN_API_AUTH_TOKEN: "${AEM_ADMIN_API_AUTH_TOKEN}"
+            annotations:
+              final: true
           fetch-all-products:
             function: "actions/fetch-all-products/index.js"
+            web: "yes"
+            runtime: "nodejs:22"
+            annotations:
+              final: true
+          fetch-all-categories:
+            function: "actions/fetch-all-categories/index.js"
             web: "yes"
             runtime: "nodejs:22"
             annotations:
@@ -58,26 +85,54 @@ application:
               AEM_ADMIN_API_AUTH_TOKEN: "${AEM_ADMIN_API_AUTH_TOKEN}"
             annotations:
               final: true
-       triggers:
-         productPollerTrigger:
-           feed: "/whisk.system/alarms/interval"
-           inputs:
-             minutes: 5
-         productScraperTrigger:
-           feed: "/whisk.system/alarms/interval"
-           inputs:
-             minutes: 60
-        markUpCleanUpTrigger:
-           feed: "/whisk.system/alarms/interval"
-           inputs:
-             minutes: 60
-       rules:
-         productPollerRule:
-           trigger: "productPollerTrigger"
-           action: "check-product-changes"
-         productScraperRule:
-           trigger: "productScraperTrigger"
-           action: "fetch-all-products"
-         markUpCleanUpRule:
-           trigger: "markUpCleanUpTrigger"
-           action: "mark-up-clean-up"
+          mark-up-category-clean-up:
+            function: "actions/mark-up-category-clean-up/index.js"
+            runtime: "nodejs:22"
+            inputs:
+              AEM_ADMIN_API_AUTH_TOKEN: "${AEM_ADMIN_API_AUTH_TOKEN}"
+            annotations:
+              final: true
+        triggers:
+          productPollerTrigger:
+            feed: "/whisk.system/alarms/interval"
+            inputs:
+              minutes: 5
+          productScraperTrigger:
+            feed: "/whisk.system/alarms/interval"
+            inputs:
+              minutes: 60
+          markUpCleanUpTrigger:
+            feed: "/whisk.system/alarms/interval"
+            inputs:
+              minutes: 60
+#          categoryPollerTrigger:
+#            feed: "/whisk.system/alarms/interval"
+#            inputs:
+#              minutes: 10
+#          categoryScraperTrigger:
+#            feed: "/whisk.system/alarms/interval"
+#            inputs:
+#              minutes: 60
+#          categoryMarkUpCleanUpTrigger:
+#            feed: "/whisk.system/alarms/interval"
+#            inputs:
+#              minutes: 60
+        rules:
+          productPollerRule:
+            trigger: "productPollerTrigger"
+            action: "check-product-changes"
+          productScraperRule:
+            trigger: "productScraperTrigger"
+            action: "fetch-all-products"
+          markUpCleanUpRule:
+            trigger: "markUpCleanUpTrigger"
+            action: "mark-up-clean-up"
+#          categoryPollerRule:
+#            trigger: "categoryPollerTrigger"
+#            action: "check-category-changes"
+#          categoryScraperRule:
+#            trigger: "categoryScraperTrigger"
+#            action: "fetch-all-categories"
+#          categoryMarkUpCleanUpRule:
+#            trigger: "categoryMarkUpCleanUpTrigger"
+#            action: "mark-up-category-clean-up"

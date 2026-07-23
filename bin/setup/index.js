@@ -156,12 +156,20 @@ const RULES_MAP = {
 
         newConfig['indices']['index-published-products'].include = pathsToInclude;
 
+        const mergedIndices = {
+          ...existingIndexConfig.indices,
+          'index-published-products': newConfig['indices']['index-published-products'],
+        };
+
+        // Keep / add category index from local query.yaml (shared overlay sites).
+        if (newConfig['indices']['index-published-categories']) {
+          mergedIndices['index-published-categories'] =
+            newConfig['indices']['index-published-categories'];
+        }
+
         const mergedConfig = {
           ...existingIndexConfig,
-          indices: {
-            ...existingIndexConfig.indices,
-            'index-published-products': newConfig['indices']['index-published-products']
-          }
+          indices: mergedIndices,
         };
 
         return yaml.dump(mergedConfig, { indent: 2 });

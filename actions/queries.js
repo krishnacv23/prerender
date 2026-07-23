@@ -201,11 +201,35 @@ const GetAllSkusPaginatedQuery = `query getAllSkusPaginated($currentPage: Int!) 
 const CategoriesQuery = `
   query getCategories {
       categories {
+          id
           name
           level
+          path
           urlPath
-      }      
+          urlKey
+          parentId
+          position
+          roles
+          children
+      }
     }
+`;
+
+const CategoriesSubtreeQuery = `
+  query getCategoriesSubtree($ids: [String!], $roles: [String!], $subtree: Subtree) {
+    categories(ids: $ids, roles: $roles, subtree: $subtree) {
+      id
+      name
+      level
+      path
+      urlPath
+      urlKey
+      parentId
+      position
+      roles
+      children
+    }
+  }
 `;
 
 const ProductCountQuery = `
@@ -255,6 +279,7 @@ module.exports = {
     GetAllSkusPaginatedQuery,
     GetLastModifiedQuery,
     CategoriesQuery,
+    CategoriesSubtreeQuery,
     ProductCountQuery,
     ProductsQuery,
     GetUrlKeyQuery

@@ -16,7 +16,12 @@ const BATCH_SIZE = 50;
 /* This file exposes some common utilities for your actions */
 
 const FILE_PREFIX = 'check-product-changes';
+const CATEGORY_FILE_PREFIX = 'check-category-changes';
 const [STATE_FILE_EXT, PDP_FILE_EXT] = ['csv', 'html'];
+const PLP_FILE_EXT = PDP_FILE_EXT;
+// Share the PDP BYOM overlay root so production sites keep a single overlay URL.
+const MARKUP_STORAGE_ROOT = '/public/pdps';
+const CATEGORY_MARKUP_PREFIX = `${MARKUP_STORAGE_ROOT}/categories`;
 
 /**
  * Creates batches of products for processing
@@ -429,6 +434,68 @@ function getProductUrl(product, context, addStore = true) {
 }
 
 /**
+ * Constructs the storefront path for a category page.
+ * Supports nested Commerce urlPath values (e.g. women/tops/tees).
+ *
+ * @param {Object} category Category with urlPath property.
+ * @param {Object} context Context with storeUrl and categoryPathFormat.
+ * @param {boolean} addStore Whether to prepend the store URL.
+ * @returns {string|null}
+ */
+function getCategoryUrl(category, context, addStore = true) {
+  const { storeUrl, categoryPathFormat } = context;
+  if (!storeUrl || !categoryPathFormat) {
+    return null;
+  }
+
+  const availableParams = {
+    urlPath: String(category.urlPath || '').replace(/^\/+/, ''),
+    urlKey: category.urlKey,
+    id: category.id,
+  };
+
+  if (context.locale) {
+    availableParams.locale = context.locale;
+  }
+
+  let path = categoryPathFormat.split('/')
+    .filter(Boolean)
+    .map((part) => {
+      if (part.startsWith('{') && part.endsWith('}')) {
+        const key = part.substring(1, part.length - 1);
+        return availableParams[key] || '';
+      }
+      return part;
+    })
+    .filter(Boolean);
+
+  // Flatten nested urlPath segments inserted as a single token
+  path = path.flatMap((segment) => String(segment).split('/').filter(Boolean));
+
+  if (addStore) {
+    return [storeUrl, ...path].join('/');
+  }
+
+  return helixSharedStringLib.sanitizePath(`/${path.join('/')}`);
+}
+
+/**
+ * Absolute markup path in App Builder Files storage for a category content path.
+ * Uses the shared PDP overlay root: /public/pdps/categories/...
+ *
+ * @param {string} contentPath e.g. /categories/gear/bags
+ * @returns {string}
+ */
+function getCategoryMarkupPath(contentPath) {
+  const normalized = `/${String(contentPath || '').replace(/^\/+/, '')}`;
+  // If already under /categories, store under overlay root + path
+  if (normalized.startsWith('/categories/')) {
+    return `${MARKUP_STORAGE_ROOT}${normalized}.${PLP_FILE_EXT}`;
+  }
+  return `${CATEGORY_MARKUP_PREFIX}${normalized}.${PLP_FILE_EXT}`;
+}
+
+/**
  * Returns the default store URL.
  *
  * @param {object} params The parameters object.
@@ -463,10 +530,16 @@ module.exports = {
   requestSpreadsheet,
   isValidUrl,
   getProductUrl,
+  getCategoryUrl,
+  getCategoryMarkupPath,
   getDefaultStoreURL,
   formatMemoryUsage,
   requestPublishedProductsIndex,
   FILE_PREFIX,
+  CATEGORY_FILE_PREFIX,
   PDP_FILE_EXT,
+  PLP_FILE_EXT,
   STATE_FILE_EXT,
+  MARKUP_STORAGE_ROOT,
+  CATEGORY_MARKUP_PREFIX,
 }

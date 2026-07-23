@@ -1,5 +1,7 @@
 # AEM Commerce Prerender
 
+> **Category (PLP) support:** see [docs/CATEGORIES.md](docs/CATEGORIES.md) for setup, env vars, and local runners (`categories:fetch`, `categories:poll`, `categories:cleanup`).
+
 The AEM Commerce Prerenderer is a tool to generate static product detail pages from dynamic data sources like Adobe Commerce Catalog Service for publishing via [AEM Edge Delivery Services](https://www.aem.live/). It integrates with [BYOM (Bring Your Own Markup)](https://www.aem.live/docs/byo-markup) and EDS indexes to deliver fast, SEO-friendly pages.
 
 ## Key Benefits

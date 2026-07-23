@@ -7,6 +7,9 @@ const DEFAULTS = {
     CONFIG_NAME: 'configs',
     CONFIG_SHEET: undefined,
     PRODUCT_PAGE_URL_FORMAT: undefined,
+    CATEGORY_PAGE_URL_FORMAT: '/categories/{urlPath}',
+    ROOT_CATEGORY_ID: '2',
+    CATEGORY_DEPTH: '4',
     // Only this token is supported
     AEM_ADMIN_API_AUTH_TOKEN: undefined,
     // Static default
@@ -15,10 +18,12 @@ const DEFAULTS = {
     CONTENT_URL_TEMPLATE: 'https://main--${site}--${org}.aem.live',
     STORE_URL_TEMPLATE:   'https://main--${site}--${org}.aem.live',
     PRODUCTS_TEMPLATE_TEMPLATE: 'https://main--${site}--${org}.aem.live/products/default',
+    CATEGORIES_TEMPLATE_TEMPLATE: 'https://main--${site}--${org}.aem.live/categories/default',
     // Raw overrides (take precedence over templates)
     CONTENT_URL: undefined,
     STORE_URL: undefined,
     PRODUCTS_TEMPLATE: undefined,
+    CATEGORIES_TEMPLATE: undefined,
     LOCALES: undefined,
     SITE_TOKEN: undefined
 };
@@ -82,6 +87,11 @@ function getRuntimeConfig(params = {}, options = {}) {
             ? joinUrl(merged.CONTENT_URL, 'products/default')
             : (ORG && SITE ? expand(merged.PRODUCTS_TEMPLATE_TEMPLATE, { org: ORG, site: SITE }) : undefined);
     }
+    if (!merged.CATEGORIES_TEMPLATE) {
+        merged.CATEGORIES_TEMPLATE = merged.CONTENT_URL
+            ? joinUrl(merged.CONTENT_URL, 'categories/default')
+            : (ORG && SITE ? expand(merged.CATEGORIES_TEMPLATE_TEMPLATE, { org: ORG, site: SITE }) : undefined);
+    }
 
     // Normalize LOCALES
     let localesArr = [null];
@@ -104,9 +114,13 @@ function getRuntimeConfig(params = {}, options = {}) {
         contentUrl: merged.CONTENT_URL,
         storeUrl: merged.STORE_URL,
         productsTemplate: merged.PRODUCTS_TEMPLATE,
+        categoriesTemplate: merged.CATEGORIES_TEMPLATE,
         configName: merged.CONFIG_NAME,
         configSheet: merged.CONFIG_SHEET,
         pathFormat: merged.PRODUCT_PAGE_URL_FORMAT,
+        categoryPathFormat: merged.CATEGORY_PAGE_URL_FORMAT || '/categories/{urlPath}',
+        rootCategoryId: String(merged.ROOT_CATEGORY_ID || '2'),
+        categoryDepth: Number(merged.CATEGORY_DEPTH || 4),
         locales: localesArr
     };
 
@@ -172,6 +186,14 @@ function validateUrls(cfg) {
             .replace(/\.html$/i, '');
         if (!isValidUrl(base)) {
             const e = new Error('Invalid productsTemplate'); e.statusCode = 400; throw e;
+        }
+    }
+    if (cfg.categoriesTemplate) {
+        const base = String(cfg.categoriesTemplate)
+            .replace(/\.plain\.html$/i, '')
+            .replace(/\.html$/i, '');
+        if (!isValidUrl(base)) {
+            const e = new Error('Invalid categoriesTemplate'); e.statusCode = 400; throw e;
         }
     }
 }

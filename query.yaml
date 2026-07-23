@@ -12,3 +12,17 @@ indices:
         select: none
         value: >-
           parseTimestamp(headers["last-modified"], "ddd, DD MMM YYYY hh:mm:ss GMT")
+  index-published-categories:
+    target: s3://published-categories-index.json
+    include:
+      - /categories/**
+    exclude:
+      - /categories/default
+    properties:
+      urlpath:
+        select: head > meta[name="urlpath"]
+        value: attribute(el, "content")
+      last-modified:
+        select: none
+        value: >-
+          parseTimestamp(headers["last-modified"], "ddd, DD MMM YYYY hh:mm:ss GMT")
